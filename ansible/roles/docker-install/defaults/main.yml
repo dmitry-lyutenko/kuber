@@ -1,0 +1,5 @@
+---
+docker_edition: "docker-ce"
+docker_repository: "docker-ce-edge"
+docker_repo_url: "https://download.docker.com/linux/centos/docker-ce.repo"
+

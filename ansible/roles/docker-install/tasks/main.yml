@@ -1,0 +1,29 @@
+---
+# tasks file for install docker and docker-compose
+
+- name: Check that docker not avaible
+  shell: "docker version"
+  register: output
+  ignore_errors: true
+
+- name: debug out
+  debug:
+    msg: "Error: docker not installed"
+  when: output['rc'] is defined and output['rc'] != 0
+  register: need_install=true
+
+- include: install_docker.yml
+  when: output['rc'] is defined and output['rc'] != 0
+
+- name: Coping config
+  copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+  when: output['rc'] is defined and output['rc'] != 0
+
+- name: docker start
+  systemd:
+    name: docker
+    enabled: yes
+    state: restarted
+

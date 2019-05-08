@@ -1,0 +1,12 @@
+[all:vars]
+user = core
+pod_cidr = 10.244.0.0/16
+apiserver_ip = 10.12.12.10
+
+[masters]
+master ansible_host=10.12.12.10
+
+[workers]
+node1  ansible_host=10.12.12.11
+node2  ansible_host=10.12.12.12
+node3  ansible_host=10.12.12.13

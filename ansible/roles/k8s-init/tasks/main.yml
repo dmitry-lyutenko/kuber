@@ -1,0 +1,8 @@
+---
+- name: Deploy masters
+  import_tasks: k8s-init-master.yml
+  when: "inventory_hostname in groups['masters']"
+
+- name: Deploy workers
+  import_tasks: k8s-init-worker.yml
+  when: "inventory_hostname in groups['workers']"

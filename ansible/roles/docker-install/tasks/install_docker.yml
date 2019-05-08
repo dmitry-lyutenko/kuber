@@ -1,0 +1,27 @@
+---
+# tasks file for install docker and docker-compose
+
+- name: Install suggested packages
+  yum:
+    name: ['yum-utils','device-mapper-persistent-data','lvm2']
+    state: present
+
+- name: get repo
+  get_url:
+    url: "{{ docker_repo_url }}"
+    dest: /etc/yum.repos.d/docer-ce.repo
+
+- name: enable 
+  command: yum-config-manager --enable {{ docker_edition }}
+
+- name: Install Docker
+  yum:
+    name: "{{ docker_edition }}"
+    state: present
+
+- name: docker start
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+    daemon_reload: yes

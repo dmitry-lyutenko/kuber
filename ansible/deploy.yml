@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  roles:
+    - docker-install
+    - k8s-install
+    - k8s-init

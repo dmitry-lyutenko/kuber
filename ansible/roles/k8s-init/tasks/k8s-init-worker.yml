@@ -1,0 +1,11 @@
+---
+- name: get join cmd from {{ groups['masters'][0] }}
+  set_fact:
+    join_cmd: "{{ hostvars[groups['masters'][0]]['join_cmd'] }}"    
+
+- name: debug out
+  debug:
+    msg: "Try to join with cmd: '{{ join_cmd }}'"
+
+- name: init nodes
+  raw: "{{ join_cmd }}"

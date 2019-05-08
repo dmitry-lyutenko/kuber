@@ -1,0 +1,36 @@
+---
+
+- name: Init master
+  raw: "kubeadm init --pod-network-cidr {{ pod_cidr }} --apiserver-advertise-address={{ apiserver_ip }}"
+  register: output
+
+- name: exctract init command (from output)
+  set_fact:
+    join_cmd: "{{ output['stdout_lines'][output['stdout_lines']|length-2] | regex_replace('\\\\','') }} {{ output['stdout_lines'][output['stdout_lines']|length-1] }}"
+
+- name: debug
+  debug:
+    msg: "{{ join_cmd }}"
+
+
+- name: copy config
+  raw: "{{ item }}"
+  with_items:
+    - "mkdir -p /home/{{ user }}/.kube"
+    - "cp -f /etc/kubernetes/admin.conf /home/{{ user }}/.kube/config"
+    - "chown $(id -u {{ user }}):$(id -g {{ user }}) /home/{{ user }}/.kube/config"
+
+- name: Install POD network
+  raw: "sudo -u {{ user }} kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml"
+
+- name: sleep & waiting Master
+  wait_for: 
+    timeout: 40
+  delegate_to: localhost
+
+- name: repeat until Master is Ready
+  command: "sudo -u {{ user }} kubectl get nodes"
+  register: status
+  retries: 10
+  delay: 10
+  until: status.stdout | regex_replace('.*\\nmaster\\s+','') | regex_replace('\\s+.*$','') == "Ready"
