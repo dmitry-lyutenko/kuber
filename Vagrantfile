@@ -1,5 +1,4 @@
 INTENT_TYPE="internal-net"
-
 MACHINES = {
   :"gw" => {
              :box_name => "centos/7",
@@ -14,7 +13,6 @@ MACHINES = {
   :"node1" => {
               :box_name => "centos/7",
               :net => [
-                       #{ip: '10.10.10.11', adapter: 2, netmask: "255.255.255.0"},
                        {ip: '10.12.12.11', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: INTENT_TYPE},
                       ],
               :cpus => 2,
@@ -23,7 +21,6 @@ MACHINES = {
   :"node2" => {
               :box_name => "centos/7",
               :net => [
-                       #{ip: '10.10.10.12', adapter: 2, netmask: "255.255.255.0"},
                        {ip: '10.12.12.12', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: INTENT_TYPE},
                       ],
               :cpus => 2,
@@ -32,7 +29,6 @@ MACHINES = {
   :"node3" => {
               :box_name => "centos/7",
               :net => [
-                       #{ip: '10.10.10.13', adapter: 2, netmask: "255.255.255.0"},
                        {ip: '10.12.12.13', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: INTENT_TYPE},
                       ],
               :cpus => 2,
@@ -41,22 +37,18 @@ MACHINES = {
   :"master" => {
               :box_name => "centos/7",
               :net => [
-                       #{ip: '10.10.10.10', adapter: 2, netmask: "255.255.255.0"},
                        {ip: '10.12.12.10', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: INTENT_TYPE},
                       ],
               :cpus => 2,
               :memory => 2048
              }
 }
-
 hosts_file="127.0.0.1\tlocalhost\n"
-
-MACHINES.each do |hostname,config|  
+MACHINES.each do |hostname,config|
   config[:net].each do |ip|
     hosts_file=hosts_file+ip[:ip]+"\t"+hostname.to_s+"\n"
   end
 end
-
 Vagrant.configure("2") do |config|
   MACHINES.each do |boxname, boxconfig|
     config.vm.define boxname do |box|
@@ -82,18 +74,20 @@ Vagrant.configure("2") do |config|
       box.vm.provision "shell" do |shell|
         shell.inline = 'useradd -m core && cd /home/core && mkdir .ssh && cat /vagrant/id_core.pub > .ssh/authorized_keys && chmod -R 700 .ssh && chown -R core:core .ssh && echo "core        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/core'
       end
-      if boxname.to_s =~ /(node\d|master)/
-        box.vm.provision "shell" do |shell|          
-          shell.inline = 'ip route del $(ip route | grep default) && ip route add default via "$1"'
-          shell.args = [MACHINES[:gw][:net][1][:ip]]
-        end
-      end
       if boxname.to_s =~ /gw/
-        box.vm.provision "shell" do |shell|          
-          shell.inline = 'ip route del $(ip route | grep default) && ip route add default via "$1" && echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf && sysctl -p'
+        box.vm.provision "shell" do |shell|
+          shell.inline = 'echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf && sysctl -p'
           shell.args = [MACHINES[:gw][:default_gw]]
         end
-      end      
+      end
+      box.vm.provision "shell", run: "always" do |shell|
+      	gw = MACHINES[:gw][:net][1][:ip]
+      	if boxname.to_s =~ /gw/
+      		gw = MACHINES[:gw][:default_gw]
+      	end
+      	shell.inline='if [ -n "$(ip route | grep default)" ]; then ip route del $(ip route | grep default); fi && ip route add default via "$1"'
+      	shell.args=[gw]
+      end
     end
   end
 end
