@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-environment
+type: Opaque
+data:
+  MYSQL_CLUSTER_ADMIN_USERNAME: YWRtaW4=
+  MYSQL_CLUSTER_ADMIN_PASSWORD: X0FkbWluUGFzc3dvcmQy
+
+
+#  mysql_admin_username: "admin"
+#  mysql_admin_password: "_AdminPassword2"
+#  # Хост, относительно которого ведется первоначальная настройка.
+#  cluster_master: node1
+#  cluster_name: "innodb_cluster"
+#  cluster_mm_mode: yes
